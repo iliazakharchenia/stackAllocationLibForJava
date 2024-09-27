@@ -3,13 +3,12 @@ package stack.collections.async;
 /**
  * Object of that class can hold an int[] data
  * in the embedded thread (stackHolder) without
- * need in active heap reference on char[] data.
+ * need in active heap reference on int[] data.
  * <p>
  * It holds a data in the 'sleeping'
  * thread stack and after method release()
  * execution it pushes a data from the stack to
- * the StringBuffer field, then returns a string
- * from it.
+ * the int[] buffer and then returns it.
  *
  * @author Iliya Zakharchenia
  * @since 0.0.1
