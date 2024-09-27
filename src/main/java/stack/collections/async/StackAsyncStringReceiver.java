@@ -1,5 +1,8 @@
 package stack.collections.async;
 
+import stack.core.abstracts.Terminator;
+import stack.core.exceptions.DataHolderThreadInterruptedException;
+
 /**
  * Object of that class can hold a char[] data
  * in the embedded thread (stackHolder)
@@ -17,7 +20,7 @@ package stack.collections.async;
  * @see stack.collections.async.StackAsyncStringReceiver
  * @see stack.collections.async.StackAsyncIntegerReceiver
  */
-public class StackAsyncStringReceiver {
+public class StackAsyncStringReceiver extends Terminator {
     private boolean toRelease = false;
     private boolean toReturn = false;
     private final StringBuffer sb = new StringBuffer(0);
@@ -31,6 +34,7 @@ public class StackAsyncStringReceiver {
      *
      */
     public String release() {
+        if (isInterruptedForever()) throw new DataHolderThreadInterruptedException();
         String data = null;
         try {
             data = releaseData();
@@ -65,7 +69,11 @@ public class StackAsyncStringReceiver {
 
     private void addCharsToStack(int index, char[] arr) throws InterruptedException {
         if (index<0) {
-            while (!toRelease) Thread.sleep(0, 10);
+            while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
+            if (this.toTerminate()) {
+                this.interruptForever();
+                return;
+            }
             return;
         }
 
@@ -73,7 +81,11 @@ public class StackAsyncStringReceiver {
 
         addCharsToStack(index-1, arr);
 
-        while (!toRelease) Thread.sleep(0, 10);
+        while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
+        if (this.toTerminate()) {
+            this.interruptForever();
+            return;
+        }
         this.sb.append(ch);
     }
 }

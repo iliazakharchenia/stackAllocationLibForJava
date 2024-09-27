@@ -1,5 +1,8 @@
 package stack.collections.async;
 
+import stack.core.abstracts.Terminator;
+import stack.core.exceptions.DataHolderThreadInterruptedException;
+
 /**
  * Object of that class can hold an int[] data
  * in the embedded thread (stackHolder) without
@@ -15,7 +18,7 @@ package stack.collections.async;
  * @see stack.collections.async.StackAsyncStringReceiver
  * @see stack.collections.async.StackAsyncIntegerReceiver
  */
-public class StackAsyncIntegerReceiver {
+public class StackAsyncIntegerReceiver extends Terminator {
     private boolean toRelease = false;
     private boolean toReturn = false;
     private int[] buffer;
@@ -32,6 +35,7 @@ public class StackAsyncIntegerReceiver {
      *
      */
     public int[] release() {
+        if (isInterruptedForever()) throw new DataHolderThreadInterruptedException();
         buffer = new int[bufferLength];
         try {
             buffer = releaseData();
@@ -65,7 +69,11 @@ public class StackAsyncIntegerReceiver {
 
     private void addIntsToStack(int index, int[] arr) throws InterruptedException {
         if (index<0) {
-            while (!toRelease) Thread.sleep(0, 10);
+            while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
+            if (this.toTerminate()) {
+                this.interruptForever();
+                return;
+            }
             return;
         }
 
@@ -73,7 +81,11 @@ public class StackAsyncIntegerReceiver {
 
         addIntsToStack(index-1, arr);
 
-        while (!toRelease) Thread.sleep(0, 10);
+        while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
+        if (this.toTerminate()) {
+            this.interruptForever();
+            return;
+        }
         this.buffer[bufferIndex] = num;
         bufferIndex++;
     }
