@@ -1,10 +1,9 @@
 package stack.collections.async;
 
 /**
- * Object of that class can hold a char[] data
- * in the embedded thread (stackHolder)
- * without need in active heap reference on
- * char[] data.
+ * Object of that class can hold an int[] data
+ * in the embedded thread (stackHolder) without
+ * need in active heap reference on char[] data.
  * <p>
  * It holds a data in the 'sleeping'
  * thread stack and after method release()
@@ -17,43 +16,45 @@ package stack.collections.async;
  * @see stack.collections.async.StackAsyncStringReceiver
  * @see stack.collections.async.StackAsyncIntegerReceiver
  */
-public class StackAsyncStringReceiver {
+public class StackAsyncIntegerReceiver {
     private boolean toRelease = false;
     private boolean toReturn = false;
-    private final StringBuffer sb = new StringBuffer(0);
+    private int[] buffer;
+    private int bufferIndex = 0;
+    private int bufferLength = 0;
 
-    public StackAsyncStringReceiver(String string) {
-        append(string);
+    public StackAsyncIntegerReceiver(int[] array) {
+        bufferLength = array.length;
+        append(array);
     }
 
     /**
      * Releases a data from the stack
      *
      */
-    public String release() {
-        String data = null;
+    public int[] release() {
+        buffer = new int[bufferLength];
         try {
-            data = releaseData();
+            buffer = releaseData();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return data;
+        return buffer;
     }
 
-    private String releaseData() throws InterruptedException {
+    private int[] releaseData() throws InterruptedException {
         toRelease = true;
         while (!toReturn) Thread.sleep(0, 10);
-        return this.sb.toString();
+        return this.buffer;
     }
 
-    private void append(String str) {
-        var arr = str.toCharArray();
+    private void append(int[] arr) {
         toRelease = false;
 
         // async process of adding to stack
         Thread stackHolder = new Thread(() -> {
             try {
-                addCharsToStack(arr.length - 1, arr);
+                addIntsToStack(arr.length - 1, arr);
 
                 toReturn = true;
             } catch (InterruptedException e) {
@@ -63,17 +64,18 @@ public class StackAsyncStringReceiver {
         stackHolder.start();
     }
 
-    private void addCharsToStack(int index, char[] arr) throws InterruptedException {
+    private void addIntsToStack(int index, int[] arr) throws InterruptedException {
         if (index<0) {
             while (!toRelease) Thread.sleep(0, 10);
             return;
         }
 
-        char ch = arr[index];
+        int num = arr[index];
 
-        addCharsToStack(index-1, arr);
+        addIntsToStack(index-1, arr);
 
         while (!toRelease) Thread.sleep(0, 10);
-        this.sb.append(ch);
+        this.buffer[bufferIndex] = num;
+        bufferIndex++;
     }
 }
