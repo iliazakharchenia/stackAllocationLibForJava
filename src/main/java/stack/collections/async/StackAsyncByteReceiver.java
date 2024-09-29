@@ -4,60 +4,60 @@ import stack.core.abstracts.Terminator;
 import stack.core.exceptions.DataHolderThreadInterruptedException;
 
 /**
- * Object of that class can hold a char[] data
- * in the embedded thread (stackHolder)
- * without need in active heap reference on
- * char[] data.
+ * Object of that class can hold a byte[] data
+ * in the embedded thread (stackHolder) without
+ * need in active heap reference on byte[] data.
  * <p>
  * It holds a data in the 'sleeping'
  * thread stack and after method release()
  * execution it pushes a data from the stack to
- * the StringBuffer field, then returns a string
- * from it.
+ * the byte[] buffer and then returns it.
  *
  * @author Iliya Zakharchenia
  * @since 0.0.1
- * @see stack.collections.async.StackAsyncByteReceiver
+ * @see stack.collections.async.StackAsyncStringReceiver
  * @see stack.collections.async.StackAsyncIntegerReceiver
  */
-public class StackAsyncStringReceiver extends Terminator {
+public class StackAsyncByteReceiver extends Terminator {
     private boolean toRelease = false;
     private boolean toReturn = false;
-    private final StringBuffer sb = new StringBuffer(0);
+    private byte[] buffer;
+    private int bufferIndex = 0;
+    private int bufferLength = 0;
 
-    public StackAsyncStringReceiver(String string) {
-        append(string);
+    public StackAsyncByteReceiver(byte[] array) {
+        bufferLength = array.length;
+        append(array);
     }
 
     /**
      * Releases a data from the stack
      *
      */
-    public String release() {
+    public byte[] release() {
         if (isInterruptedForever()) throw new DataHolderThreadInterruptedException();
-        String data = null;
+        buffer = new byte[bufferLength];
         try {
-            data = releaseData();
+            buffer = releaseData();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return data;
+        return buffer;
     }
 
-    private String releaseData() throws InterruptedException {
+    private byte[] releaseData() throws InterruptedException {
         toRelease = true;
         while (!toReturn) Thread.sleep(0, 10);
-        return this.sb.toString();
+        return this.buffer;
     }
 
-    private void append(String str) {
-        var arr = str.toCharArray();
+    private void append(byte[] arr) {
         toRelease = false;
 
         // async process of adding to stack
         Thread stackHolder = new Thread(() -> {
             try {
-                addCharsToStack(arr.length - 1, arr);
+                addDataToStack(arr.length - 1, arr);
 
                 toReturn = true;
             } catch (InterruptedException e) {
@@ -67,7 +67,7 @@ public class StackAsyncStringReceiver extends Terminator {
         stackHolder.start();
     }
 
-    private void addCharsToStack(int index, char[] arr) throws InterruptedException {
+    private void addDataToStack(int index, byte[] arr) throws InterruptedException {
         if (index<0) {
             while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
             if (this.toTerminate()) {
@@ -77,15 +77,16 @@ public class StackAsyncStringReceiver extends Terminator {
             return;
         }
 
-        char ch = arr[index];
+        byte num = arr[index];
 
-        addCharsToStack(index-1, arr);
+        addDataToStack(index-1, arr);
 
         while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
         if (this.toTerminate()) {
             this.interruptForever();
             return;
         }
-        this.sb.append(ch);
+        this.buffer[bufferIndex] = num;
+        bufferIndex++;
     }
 }

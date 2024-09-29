@@ -16,7 +16,7 @@ import stack.core.exceptions.DataHolderThreadInterruptedException;
  * @author Iliya Zakharchenia
  * @since 0.0.1
  * @see stack.collections.async.StackAsyncStringReceiver
- * @see stack.collections.async.StackAsyncIntegerReceiver
+ * @see stack.collections.async.StackAsyncByteReceiver
  */
 public class StackAsyncIntegerReceiver extends Terminator {
     private boolean toRelease = false;
