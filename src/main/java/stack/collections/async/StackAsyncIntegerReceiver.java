@@ -57,7 +57,7 @@ public class StackAsyncIntegerReceiver extends Terminator {
         // async process of adding to stack
         Thread stackHolder = new Thread(() -> {
             try {
-                addIntsToStack(arr.length - 1, arr);
+                addDataToStack(arr.length - 1, arr);
 
                 toReturn = true;
             } catch (InterruptedException e) {
@@ -67,7 +67,7 @@ public class StackAsyncIntegerReceiver extends Terminator {
         stackHolder.start();
     }
 
-    private void addIntsToStack(int index, int[] arr) throws InterruptedException {
+    private void addDataToStack(int index, int[] arr) throws InterruptedException {
         if (index<0) {
             while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
             if (this.toTerminate()) {
@@ -79,7 +79,7 @@ public class StackAsyncIntegerReceiver extends Terminator {
 
         int num = arr[index];
 
-        addIntsToStack(index-1, arr);
+        addDataToStack(index-1, arr);
 
         while (!toRelease && !this.toTerminate()) Thread.sleep(0, 10);
         if (this.toTerminate()) {
